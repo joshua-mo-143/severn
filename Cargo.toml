@@ -1,0 +1,23 @@
+[package]
+name = "severn"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[example]]
+name = "basic"
+crate-type = ["bin"]
+
+[dependencies]
+async-trait = "0.1.80"
+async-openai = "0.21.0"
+serde_json = "1.0.117"
+thiserror = "1.0.61"
+qdrant-client = { version = "1.9.0", optional = true }
+anyhow = "1.0.86"
+
+[dev-dependencies]
+tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
+
+[features]
+qdrant = ["dep:qdrant-client"]
