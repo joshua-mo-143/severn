@@ -1,5 +1,5 @@
 use crate::errors::Error;
-use crate::{agent::Agent, data_sources::DataSource};
+use crate::{agents::traits::Agent, data_sources::DataSource};
 use async_openai::{config::OpenAIConfig, Client};
 use std::sync::Arc;
 

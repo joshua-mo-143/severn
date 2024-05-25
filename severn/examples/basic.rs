@@ -1,5 +1,5 @@
 use async_openai::{config::OpenAIConfig, Client};
-use severn::{agent::Agent, pipeline::Pipeline};
+use severn::{agents::traits::Agent, pipeline::Pipeline};
 use std::sync::Arc;
 
 struct ExampleAgent;

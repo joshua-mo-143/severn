@@ -1,5 +1,9 @@
-pub mod agent;
+pub mod agents;
 pub mod data_sources;
+pub mod files;
+
+#[cfg(feature = "macros")]
+pub use severn_macros::severn as severn_agent;
 
 #[cfg(feature = "qdrant")]
 pub use data_sources::qdrant;
