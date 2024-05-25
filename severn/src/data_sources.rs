@@ -176,45 +176,53 @@ pub mod qdrant {
 }
 
 #[cfg(feature = "http")]
-mod http {
-    use reqwest::{Client, IntoUrl};
+pub mod http {
+    use crate::data_sources::DataSource;
+    use crate::errors::Error;
+    use qdrant_client::qdrant::Value;
+    use reqwest::{header::HeaderMap, Client, Url};
 
+    #[derive(Default)]
     pub struct HttpClientBuilder {
-        http: Client,
-        url: Option<Url>,
-        request_method: RequestMethod,
-        body: Option<serde_json::Value>,
+        pub http: Client,
+        pub url: Option<Url>,
+        pub headers: HeaderMap,
+        pub body: Option<serde_json::Value>,
     }
 
     pub struct HttpClient {
-        http: Client,
+        pub http: Client,
         url: Url,
-        request_method: RequestMethod,
-        body: Option<serde_json::Value>,
-    }
-
-    pub enum RequestMethod {
-        Get,
-        Post,
+        pub headers: HeaderMap,
+        pub body: Option<serde_json::Value>,
     }
 
     impl HttpClientBuilder {
         pub fn new() -> Self {
             Self {
                 http: Client::new(),
-                request_method: RequestMethod::Get,
                 ..Default::default()
             }
         }
 
-        pub fn url(mut self, url: IntoUrl) -> Self {
+        pub fn url(mut self, url: Url) -> Self {
             self.url = Some(url);
 
             self
         }
 
-        pub fn request_method(mut self, request_method: RequestMethod) -> Self {
-            self.url = Some(request_method);
+        pub fn add_header<K: reqwest::header::IntoHeaderName>(
+            mut self,
+            key: K,
+            val: String,
+        ) -> Self {
+            self.headers.insert(key, val.parse().unwrap());
+
+            self
+        }
+
+        pub fn set_headers(mut self, header_map: HeaderMap) -> Self {
+            self.headers = header_map;
 
             self
         }
@@ -226,44 +234,55 @@ mod http {
         }
 
         pub fn build(self) -> anyhow::Result<HttpClient> {
-            let (http, url, request_method, body) = self;
+            let Self {
+                http,
+                headers,
+                url,
+                body,
+            } = self;
 
             let Some(url) = url else {
                 return Err(anyhow::anyhow!("You need a URL!"));
             };
 
-            if request_method == RequestMethod::Get && body.is_some() {
+            let Some(body) = body else {
                 return Err(anyhow::anyhow!("You can't have a GET request with a body!"));
-            }
-
-            if request_method == RequestMethod::Post && !body.is_some() {
-                return Err(anyhow::anyhow!(
-                    "You didn't set a body on your POST request!"
-                ));
-            }
+            };
 
             Ok(HttpClient {
                 http,
                 url,
-                request_method,
-                body,
+                body: Some(body),
+                headers,
             })
         }
     }
 
+    impl HttpClient {
+        fn url(&self) -> Url {
+            self.url.clone()
+        }
+
+        fn body(&self) -> serde_json::Value {
+            self.body.clone().unwrap()
+        }
+    }
+
+    #[async_trait::async_trait]
     impl DataSource for HttpClient {
         async fn retrieve_data(&self) -> Result<String, Error> {
-            let res = self
-                .client
-                .post(self.url)
-                .json(self.body)
+            let client = reqwest::Client::new();
+            let res = client
+                .post(self.url())
+                .json(&self.body())
                 .send()
                 .await
                 .unwrap()
                 .json::<Value>()
+                .await
                 .unwrap();
 
-            Ok(serde_json::to_string_pretty(res))
+            Ok(serde_json::to_string_pretty(&res)?)
         }
     }
 }

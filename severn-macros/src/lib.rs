@@ -34,6 +34,7 @@ pub fn severn(args: TokenStream, item: TokenStream) -> TokenStream {
     TokenStream::from(quote)
 }
 
+#[allow(dead_code)]
 struct MyArgs {
     name_ident: Ident,
     equals_sign1: Token![=],

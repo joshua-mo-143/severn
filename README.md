@@ -1,5 +1,5 @@
 # Severn: Agent AI pipelines in Rust, made easy.
-This crate aims to 
+This crate aims to make writing AI agent pipelines as easy as possible, while still using idiomatic Rust syntax.
 
 ## Features
 - Sequential pipelines for running AI agents and feeding the results into each other
@@ -79,3 +79,6 @@ Currently only OpenAI is supported, but in the future support will be added for 
 ## Contributions
 Issues and PRs are welcome. However, unless the fix is very minor (for example a documentation typo), please make sure you open an issue first! This will avoid unnecessary work if it is either not in line with the overall vision of the crate(s) or warrants more attention than a single PR.
 
+## FAQ
+### Why not llm-chain?
+I found that the llm-chain crate was quite macro heavy and not to my taste. I'd be happy to use it if it was more idiomatic, but it isn't, so here we are.

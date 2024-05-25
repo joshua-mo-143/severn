@@ -1,8 +1,14 @@
 use crate::agents::traits::Agent;
 
-struct ArticleWriter {
+pub struct ArticleWriter {
     target_audience: String,
     tone: String,
+}
+
+impl Default for ArticleWriter {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ArticleWriter {
@@ -47,5 +53,34 @@ impl Agent for ArticleWriter {
                 self.target_audience(),
                 self.tone()
         )
+    }
+}
+
+pub struct Researcher;
+
+impl Researcher {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for Researcher {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Agent for Researcher {
+    fn name(&self) -> String {
+        "Researcher".into()
+    }
+
+    fn system_message(&self) -> String {
+        "You are an AI agent.
+
+         Your job is to research whatever query the user gives you, with the provided context.
+
+        When answering, your summary should be concise."
+            .to_string()
     }
 }
