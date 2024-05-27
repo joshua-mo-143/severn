@@ -12,3 +12,5 @@ pub use data_sources::qdrant;
 pub use qdrant_client;
 pub mod errors;
 pub mod pipeline;
+
+pub mod models;
