@@ -42,7 +42,7 @@ impl OpenAI {
         Ok(Self { client })
     }
 
-    pub fn from_str(api_key: &str) -> Result<Self> {
+    pub fn from_api_key(api_key: &str) -> Result<Self> {
         let config = OpenAIConfig::new()
             .with_api_key(api_key)
             .with_org_id("severn");
@@ -52,7 +52,7 @@ impl OpenAI {
         Ok(Self { client })
     }
 
-    pub fn from_str_with_org_id(api_key: &str, org_id: &str) -> Result<Self> {
+    pub fn from_api_key_with_org_id(api_key: &str, org_id: &str) -> Result<Self> {
         let config = OpenAIConfig::new()
             .with_api_key(api_key)
             .with_org_id(org_id);
