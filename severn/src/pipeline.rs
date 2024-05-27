@@ -1,4 +1,5 @@
 use crate::errors::Error;
+use crate::models::PromptModel;
 use crate::{agents::traits::Agent, data_sources::DataSource};
 use async_openai::{config::OpenAIConfig, Client};
 use std::sync::Arc;
@@ -6,7 +7,6 @@ use std::sync::Arc;
 pub struct Pipeline {
     agents: Vec<Arc<dyn Agent>>,
     data_source: Option<Arc<dyn DataSource>>,
-    client: Client<OpenAIConfig>,
 }
 
 impl Default for Pipeline {
@@ -17,16 +17,9 @@ impl Default for Pipeline {
 
 impl Pipeline {
     pub fn new() -> Self {
-        let api_key = std::env::var("OPENAI_API_KEY").expect("No OPENAI_API_KEY");
-        let config = OpenAIConfig::new()
-            .with_api_key(api_key)
-            .with_org_id("severn");
-
-        let client = Client::with_config(config);
         Self {
             agents: Vec::new(),
             data_source: None,
-            client,
         }
     }
 
@@ -42,7 +35,11 @@ impl Pipeline {
         self
     }
 
-    pub async fn run_pipeline(&self, prompt: String) -> Result<String, Error> {
+    pub async fn run_pipeline<P: PromptModel>(
+        &self,
+        prompt: String,
+        model: P,
+    ) -> Result<String, Error> {
         let mut context = match &self.data_source {
             Some(source) => source.retrieve_data().await?,
             None => String::new(),
@@ -54,9 +51,7 @@ impl Pipeline {
         }
 
         while let Some(agent) = agents.next() {
-            let res = agent
-                .prompt(&prompt, context.to_owned(), self.client.to_owned())
-                .await?;
+            let res = model.prompt(&prompt, context.to_owned(), agent).await?;
             context = res.clone();
 
             if agents.peek().is_none() {
