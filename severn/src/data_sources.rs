@@ -25,11 +25,11 @@ pub mod qdrant {
     pub struct Qdrant {
         client: QdrantClient,
         collection_name: String,
-        openai_client: Client<OpenAIConfig>,
+        payload_field: String,
     }
 
     impl Qdrant {
-        pub fn new(client: QdrantClient) -> Self {
+        pub fn new(client: QdrantClient, collection_Name: String, payload_field: String) -> Self {
             let api_key = std::env::var("OPENAI_API_KEY").expect("No OPENAI_API_KEY");
             let config = OpenAIConfig::new()
                 .with_api_key(api_key)
@@ -39,15 +39,27 @@ pub mod qdrant {
 
             Self {
                 client,
-                collection_name: "Meme".to_string(),
-                openai_client,
+                collection_name,
+                payload_field,
             }
         }
 
-        pub async fn embed_and_upsert<T: File>(&self, path: PathBuf) -> anyhow::Result<()> {
+        pub fn collection_name(&self) -> &str {
+            &self.collection_name
+        }
+
+        pub fn payload_field(&self) -> &str {
+            &self.payload_field
+        }
+
+        pub async fn embed_and_upsert<T: File, E: EmbedModel>(
+            &self,
+            path: PathBuf,
+            embedder: E,
+        ) -> anyhow::Result<()> {
             let file = T::from_filepath(path)?;
 
-            let embeddings = self.embed_file(file.parse()).await?;
+            let embeddings = embedder.embed_file(file.parse()).await?;
 
             for embedding in embeddings {
                 self.upsert_embedding(
@@ -63,54 +75,6 @@ pub mod qdrant {
             }
 
             Ok(())
-        }
-
-        pub async fn embed_file(
-            &self,
-            chunked_contents: Vec<String>,
-        ) -> anyhow::Result<Vec<Vec<f32>>> {
-            let embedding_request = CreateEmbeddingRequest {
-                model: "text-embedding-ada-002".to_string(),
-                input: EmbeddingInput::StringArray(chunked_contents.to_owned()),
-                encoding_format: None, // defaults to f32
-                user: None,
-                dimensions: Some(1536),
-            };
-
-            let embeddings = Embeddings::new(&self.openai_client)
-                .create(embedding_request)
-                .await?;
-
-            if embeddings.data.is_empty() {
-                return Err(anyhow::anyhow!(
-                    "There were no embeddings returned by OpenAI!"
-                ));
-            }
-
-            Ok(embeddings.data.into_iter().map(|x| x.embedding).collect())
-        }
-
-        pub async fn embed_sentence(&self, prompt: &str) -> anyhow::Result<Vec<f32>> {
-            let embedding_request = CreateEmbeddingRequest {
-                model: "text-embedding-ada-002".to_string(),
-                input: EmbeddingInput::String(prompt.to_owned()),
-                encoding_format: None, // defaults to f32
-                user: None,
-                dimensions: Some(1536),
-            };
-
-            let embeddings = Embeddings::new(&self.openai_client)
-                .create(embedding_request)
-                .await?;
-
-            let embedding = embeddings.data.first();
-
-            match embedding {
-                Some(res) => Ok(res.embedding.clone()),
-                None => Err(anyhow::anyhow!(
-                    "There were no embeddings returned by OpenAI!"
-                )),
-            }
         }
 
         pub async fn upsert_embedding(
@@ -165,7 +129,7 @@ pub mod qdrant {
             let vec: Vec<f32> = Vec::new();
             let embedding = self.search_embeddings(vec).await?;
 
-            let payload_field_value = embedding.payload.get("document");
+            let payload_field_value = embedding.payload.get(self.payload_field());
 
             match payload_field_value {
                 Some(res) => Ok(serde_json::to_string(res).unwrap()),
