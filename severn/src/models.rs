@@ -14,12 +14,12 @@ use async_trait::async_trait;
 
 use crate::errors::Error;
 
-struct OpenAI {
+pub struct OpenAI {
     client: Client<OpenAIConfig>,
 }
 
 impl OpenAI {
-    fn from_env() -> Result<Self> {
+    pub fn from_env() -> Result<Self> {
         let api_key = std::env::var("OPENAI_API_KEY")?;
         let config = OpenAIConfig::new()
             .with_api_key(api_key)

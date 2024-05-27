@@ -1,7 +1,6 @@
 use crate::errors::Error;
 use crate::models::PromptModel;
 use crate::{agents::traits::Agent, data_sources::DataSource};
-use async_openai::{config::OpenAIConfig, Client};
 use std::sync::Arc;
 
 pub struct Pipeline {
@@ -52,6 +51,7 @@ impl Pipeline {
 
         while let Some(agent) = agents.next() {
             let res = model.prompt(&prompt, context.to_owned(), agent).await?;
+
             context = res.clone();
 
             if agents.peek().is_none() {
@@ -60,5 +60,55 @@ impl Pipeline {
         }
 
         Err(Error::NoAgentsExist)
+    }
+
+    pub async fn run_agent_at_index<P: PromptModel>(
+        &self,
+        prompt: String,
+        index: usize,
+        model: P,
+    ) -> Result<String, Error> {
+        let context = match &self.data_source {
+            Some(source) => source.retrieve_data().await?,
+            None => String::new(),
+        };
+
+        let agent = self.agents.get(index);
+
+        match agent {
+            Some(found_agent) => {
+                let res = model
+                    .prompt(&prompt, context.to_owned(), found_agent)
+                    .await?;
+
+                Ok(res)
+            }
+            None => Err(Error::NoAgentsExist),
+        }
+    }
+
+    pub async fn run_agent_by_name<P: PromptModel>(
+        &self,
+        prompt: String,
+        name: &str,
+        model: P,
+    ) -> Result<String, Error> {
+        let context = match &self.data_source {
+            Some(source) => source.retrieve_data().await?,
+            None => String::new(),
+        };
+
+        let agent = self.agents.iter().find(|x| x.name() == *name);
+
+        match agent {
+            Some(found_agent) => {
+                let res = model
+                    .prompt(&prompt, context.to_owned(), found_agent)
+                    .await?;
+
+                Ok(res)
+            }
+            None => Err(Error::NoAgentsExist),
+        }
     }
 }
