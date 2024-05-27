@@ -24,6 +24,32 @@ pub struct CSVFile {
     pub contents: String,
 }
 
+pub struct ParagraphTextSplitter {
+    pub source: FileSource,
+    pub contents: String,
+}
+
+impl File for ParagraphTextSplitter {
+    fn contents(&self) -> String {
+        self.contents.clone()
+    }
+
+    fn from_filepath(path: PathBuf) -> anyhow::Result<Self> {
+        let source = FileSource::Filepath(path.to_owned());
+
+        let contents = read_to_string(path)?;
+
+        Ok(Self { source, contents })
+    }
+
+    fn parse(&self) -> Vec<String> {
+        self.contents
+            .split("/n/n")
+            .map(|x| x.to_owned())
+            .collect::<Vec<String>>()
+    }
+}
+
 impl File for CSVFile {
     fn contents(&self) -> String {
         self.contents.clone()
