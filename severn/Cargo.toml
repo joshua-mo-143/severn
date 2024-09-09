@@ -27,7 +27,7 @@ qdrant-client = { version = "1.9.0", optional = true }
 severn-macros = { version = "0.0.1", path = "../severn-macros", optional = true }
 
 [dev-dependencies]
-tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
 rusty-hook = { workspace = true }
 
 [features]
