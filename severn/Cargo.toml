@@ -18,7 +18,7 @@ async-trait = "0.1.80"
 async-openai = "0.21.0"
 serde_json = "1.0.117"
 thiserror = "1.0.61"
-anyhow = "1.0.86"
+anyhow = "1.0.87"
 uuid = { version = "1.8.0", features = ["v4"] }
 
 #feature-gated dependencies
