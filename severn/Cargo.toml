@@ -14,7 +14,7 @@ crate-type = ["bin"]
 required-features = ["qdrant"]
 
 [dependencies]
-async-trait = "0.1.80"
+async-trait = "0.1.83"
 async-openai = "0.21.0"
 serde_json = "1.0.117"
 thiserror = "1.0.61"
